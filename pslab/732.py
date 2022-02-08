@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 from numpy.polynomial.polynomial import Polynomial
 import xlwt
 
-
 def calc_intercept(eq_1, eq_2):
   assert 1 == eq_1.degree() and 1 == eq_2.degree()
 
@@ -72,7 +71,7 @@ def gen_mccabe_points(x, y, eq1, eq2, start_x, mid_x, end_x):
   return p
 
 
-def get_mccabe_min_steps(x, y, eq1, start_x, mid_x):
+def get_mccable_eq_steps(x, y, eq1, start_x, mid_x):
   return (len(_gen_mccabe_points(x, y, eq1, start_x, start_x, mid_x)) + 1) // 2
 
 
@@ -112,10 +111,10 @@ y_elv = [0, 0.17, 0.3891, 0.4375, 0.4704, 0.5089, 0.5445, 0.558, 0.5826,
 steps = gen_mccabe_points(
     x_elv, y_elv, eq_enriquecimiento, eq_agotamiento, x_D, x_agotamiento_2, x_B)
 
-etapas = get_mccabe_min_steps(
+etapas = get_mccable_eq_steps(
     x_elv, y_elv, eq_enriquecimiento, x_D, x_agotamiento_2)
 
-print(etapas)
+print(f"etapas en el equilibrio = {etapas}")
 
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
