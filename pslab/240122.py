@@ -9,7 +9,6 @@ y_elv = [0, 0.21, 0.37, 0.51, 0.65, 0.72, 0.79, 0.86, 0.91, 0.96, 0.98, 1]
 x_D = 0.96
 z_F = 0.5
 
-
 # simple hack to analyze function calls
 def wrap_result_print(f):
   def _f(*args):

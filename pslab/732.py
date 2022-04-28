@@ -36,8 +36,8 @@ def find_closest_indices(l, v):
 def find_intercept_in_list_at_y(lx, ly, y):
   i, j = find_closest_indices(ly, y)
 
-  # not handling this case atm
-  assert i != j
+  if i == j:
+    return lx[i], ly[i]
 
   m = (ly[j] - ly[i]) / (lx[j] - lx[i])
   b = ly[i] - m * lx[i]
