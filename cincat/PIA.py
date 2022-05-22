@@ -23,6 +23,7 @@ from scipy.integrate import solve_ivp
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 from prettytable import PrettyTable
+import xlwt
 # ============================================================================
 
 # ============================================================================
@@ -44,6 +45,9 @@ C_MEG_INDEX = 2
 C_DEG_INDEX = 3
 C_TEG_INDEX = 4
 C_COUNT = 5
+
+wb = xlwt.Workbook()
+sheet = wb.add_sheet("Resultados")
 # ============================================================================
 
 def r_c_eto(k, c):
@@ -302,6 +306,19 @@ def calc_r2_error(kr, r2):
   return err
 
 
+__write_to_excel_offset = 0
+def write_row_excel(values):
+  global __write_to_excel_offset
+
+  for i, v in enumerate(values):
+    sheet.write(__write_to_excel_offset, i, v)
+
+  __write_to_excel_offset += 1
+  
+def save_excel():
+  wb.save("PIA.xls")
+
+
 def display_integrated_model_result(k, c0):
   t, c = calc_compare_model(k, c0)
   t_plot, c_plot = calc_plotting_model(k, c0) 
@@ -314,7 +331,15 @@ def display_integrated_model_result(k, c0):
     pt.add_row([ti, c_exp, c_mod[C_ETO_INDEX], e])
 
   print(pt)
-  
+
+  write_row_excel(["t (min)", "C_EtO experimental", "C_EtO modelo", "% error"])
+  for ti, c_exp, c_mod, e in zip(t, c_eto_exp, c, err):
+    write_row_excel([float(ti), float(c_exp), float(c_mod[C_ETO_INDEX]), float(e)])
+
+  write_row_excel([])
+  save_excel()
+
+
   plt.plot(t_exp, c_eto_exp, "o", label="$C_{EtO}$ experimental")
   plt.plot(t_plot, c_plot[C_ETO_INDEX], label="$C_{EtO}$ modelado")
   plt.legend()
@@ -351,6 +376,13 @@ def display_minimize_r2_result(r2, title=""):
     pt.add_row([ti, r_exp, r_mod, e])
 
   print(pt)
+
+  write_row_excel(["t (min)", "r_EtO experimental", "r_EtO modelo", "% error"])
+  for ti, r_exp, r_mod, e in zip(t_exp, r_eto_exp, model, err):
+    write_row_excel([float(ti), float(r_exp), float(r_mod), float(e)])
+
+  write_row_excel([])
+  save_excel()
 
   plt.plot(t_exp, r_eto_exp, "o", label="$-r_{EtO}$ experimental")
   plt.plot(t_exp, model, label="$-r_{EtO}$ modelo")
