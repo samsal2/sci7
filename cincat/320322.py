@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.stats import linregress
+
 # TIPO PFR INTEGRAL
 
 # -r_A = FA0 * dXA / dV = kCa^alfa
@@ -11,7 +12,6 @@ from scipy.stats import linregress
 
 
 D_interno = 0.158  # cm
-
 X_A = np.array([0.00, 1.93, 3.82, 5.68, 7.58, 9.25, 11.0]) / 100
 
 intervalo = 5  # cm
