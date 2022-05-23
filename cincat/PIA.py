@@ -33,12 +33,14 @@ t_exp = np.array([0, 5, 10, 20, 30, 45, 65, 90, 125, 160, 213])
 c_eto_exp = np.array([7.557, 7.045, 6.614, 5.889, 5.267,
                       4.401, 3.582, 2.742, 2.022, 1.549, 0.803])
 
+# r estimation 
 r_eto_exp = -np.gradient(c_eto_exp, t_exp, edge_order=2)
 
+# constant values from the paper
 k = [0.000347, 0.000111, 0.000152]
 c0 = [7.557, 34.0065, 0, 0, 0]
 
-
+# C indicies for the solution
 C_ETO_INDEX = 0
 C_W_INDEX = 1
 C_MEG_INDEX = 2
@@ -68,9 +70,6 @@ def r_c_w(k, c):
 
   c_eto = c[C_ETO_INDEX]
   c_w = c[C_W_INDEX]
-  _ = c[C_MEG_INDEX]
-  _ = c[C_DEG_INDEX]
-  _ = c[C_TEG_INDEX]
 
   return -(k_1 * c_w * c_eto)
 
@@ -82,8 +81,6 @@ def r_c_meg(k, c):
   c_eto = c[C_ETO_INDEX]
   c_w = c[C_W_INDEX]
   c_meg = c[C_MEG_INDEX]
-  _ = c[C_DEG_INDEX]
-  _ = c[C_TEG_INDEX]
 
   return (k_1 * c_w * c_eto - k_2 * c_meg * c_eto)
 
@@ -93,10 +90,8 @@ def r_c_deg(k, c):
   _, k_2, k_3 = k[0], k[1], k[2]
 
   c_eto = c[C_ETO_INDEX]
-  _ = c[C_W_INDEX]
   c_meg = c[C_MEG_INDEX]
   c_deg = c[C_DEG_INDEX]
-  _ = c[C_TEG_INDEX]
 
   return k_2 * c_meg * c_eto - k_3 * c_deg * c_eto
 
@@ -106,10 +101,7 @@ def r_c_teg(k, c):
   _, _, k_3 = k[0], k[1], k[2]
 
   c_eto = c[C_ETO_INDEX]
-  _ = c[C_W_INDEX]
-  _ = c[C_MEG_INDEX]
   c_deg = c[C_DEG_INDEX]
-  _ = c[C_TEG_INDEX]
 
   return k_3 * c_deg * c_eto
 
@@ -127,7 +119,7 @@ def generate_eq_system(k):
 
   return __f
 
-# NOTE(samuel): avoid calling too often, ofc it's and extremely low call
+# NOTE(samuel): avoid calling too often, ofc it's an extremely slow call
 
 
 def solve_at_t_for_k(k, c0, t):
@@ -203,60 +195,44 @@ def r2_0(kr, c):
   c_eto = c[C_ETO_INDEX]
   c_w = c[C_W_INDEX]
   c_meg = c[C_MEG_INDEX]
-  _ = c[C_DEG_INDEX]
-  _ = c[C_TEG_INDEX]
 
   return k_obs * (c_eto * c_w) / (1 + k_1 * c_eto + k_3 * c_meg)
 
 
 def r2_1(kr, c):
-
   k_obs, _, _ = kr[0], kr[1], kr[2]
 
-  _ = c[C_ETO_INDEX]
   c_w = c[C_W_INDEX]
-  _ = c[C_MEG_INDEX]
-  _ = c[C_DEG_INDEX]
-  _ = c[C_TEG_INDEX]
 
   return k_obs * c_w
 
 
 def r2_2(kr, c):
-  
   k_obs, k_1, k_3 = kr[0], kr[1], kr[2]
 
   c_eto = c[C_ETO_INDEX]
   c_w = c[C_W_INDEX]
   c_meg = c[C_MEG_INDEX]
-  _ = c[C_DEG_INDEX]
-  _ = c[C_TEG_INDEX]
 
   return k_obs * c_eto * c_w / (k_3 * c_meg)
 
 
 def r2_3(kr, c):
-  
   k_obs, k_1, k_3 = kr[0], kr[1], kr[2]
 
   c_eto = c[C_ETO_INDEX]
   c_w = c[C_W_INDEX]
   c_meg = c[C_MEG_INDEX]
-  _ = c[C_DEG_INDEX]
-  _ = c[C_TEG_INDEX]
 
   return k_obs * c_eto * c_w / (1 + k_3 * c_meg)
 
 
 def r2_4(kr, c):
-
   k_obs, k_1, k_3 = kr[0], kr[1], kr[2]
 
   c_eto = c[C_ETO_INDEX]
   c_w = c[C_W_INDEX]
   c_meg = c[C_MEG_INDEX]
-  _ = c[C_DEG_INDEX]
-  _ = c[C_TEG_INDEX]
 
   return k_obs * c_eto * c_w / (1 + k_1 * c_eto)
   
@@ -276,19 +252,19 @@ def minimize_r2_method(k, kr0, r2, ev=msqr):
 
   def __not_negative(v):
     return np.sum([0 > vi for vi in v])
-  
-  constraints = ({"type": "eq", "fun": __not_negative})
+ 
+  # FIXME(samuel): figure out how the contraints actually work
+  # constraints = ({"type": "eq", "fun": __not_negative})
 
-  return minimize(__f, kr0, constraints=constraints)
+  return minimize(__f, kr0, method="Nelder-Mead") #, constraints=constraints)
 
 
 def calc_model_errors(k, c0):
   _, c = calc_compare_model(k, c0)
 
-  err = np.empty(len(c_eto_exp))
-
   model = c.transpose()[C_ETO_INDEX]
 
+  err = np.empty(len(c_eto_exp))
   for i, (c_mod, c_exp) in enumerate(zip(model, c_eto_exp)):
     err[i] = np.abs((c_exp - c_mod) / c_exp) * 100
 
@@ -299,7 +275,6 @@ def calc_r2_error(kr, r2):
   model = calc_r2_model(k, kr, r2)
 
   err = np.empty(len(c_eto_exp))
-
   for i, (r_mod, r_exp) in enumerate(zip(model, r_eto_exp)):
     err[i] = np.abs((r_exp - r_mod) / r_exp) * 100
 
@@ -319,22 +294,33 @@ def save_excel():
   wb.save("PIA.xls")
 
 
+
 def display_integrated_model_result(k, c0):
   t, c = calc_compare_model(k, c0)
   t_plot, c_plot = calc_plotting_model(k, c0) 
   err = calc_model_errors(k, c0)
 
   pt = PrettyTable()
-  pt.field_names = ["t (min)", "C_EtO experimental", "C_EtO modelo", "% error"]
+  pt.field_names = ["t (min)", "C_EtO experimental", "C_EtO modelo", "C_W modelo", "C_MEG modelo", "C_DEG modelo", "C_TEG modelo", "% C_EtO error"]
 
   for ti, c_exp, c_mod, e in zip(t, c_eto_exp, c, err):
-    pt.add_row([ti, c_exp, c_mod[C_ETO_INDEX], e])
+    c_eto = float(c_mod[C_ETO_INDEX])
+    c_w = float(c_mod[C_W_INDEX])
+    c_meg = float(c_mod[C_MEG_INDEX])
+    c_deg = float(c_mod[C_DEG_INDEX])
+    c_teg = float(c_mod[C_TEG_INDEX])
+    pt.add_row([ti, c_exp, c_eto, c_w, c_meg, c_deg, c_teg, e])
 
   print(pt)
 
-  write_row_excel(["t (min)", "C_EtO experimental", "C_EtO modelo", "% error"])
+  write_row_excel(["t (min)", "C_EtO experimental", "C_EtO modelo", "C_W modelo", "C_MEG modelo" "C_DEG modelo", "C_TEG modelo", "% C_EtO error"])
   for ti, c_exp, c_mod, e in zip(t, c_eto_exp, c, err):
-    write_row_excel([float(ti), float(c_exp), float(c_mod[C_ETO_INDEX]), float(e)])
+    c_eto = float(c_mod[C_ETO_INDEX])
+    c_w = float(c_mod[C_W_INDEX])
+    c_meg = float(c_mod[C_MEG_INDEX])
+    c_deg = float(c_mod[C_DEG_INDEX])
+    c_teg = float(c_mod[C_TEG_INDEX])
+    write_row_excel([float(ti), float(c_exp), c_eto, c_w, c_meg, c_deg, c_teg, float(e)])
 
   write_row_excel([])
   save_excel()
@@ -351,6 +337,8 @@ def display_integrated_model_result(k, c0):
   plt.plot(t_plot, c_plot[C_ETO_INDEX], label="$C_{EtO}$")
   plt.plot(t_plot, c_plot[C_MEG_INDEX], label="$C_{MEG}$")
   plt.plot(t_plot, c_plot[C_W_INDEX], label="$C_{W}$")
+  plt.plot(t_plot, c_plot[C_DEG_INDEX], label="$C_{DEG}$")
+  plt.plot(t_plot, c_plot[C_TEG_INDEX], label="$C_{TEG}$")
   plt.xlabel("$t (min)$")
   plt.ylabel("$C (mol / L)$")
   plt.grid()
@@ -358,7 +346,7 @@ def display_integrated_model_result(k, c0):
   plt.show()
 
 def display_minimize_r2_result(r2, title=""):
-  r = minimize_r2_method(k, [0.001149, 0.299284, 0.31144], r2, msqr)
+  r = minimize_r2_method(k, [0.1, 0.2, 0.3], r2, msqr)
   model = calc_r2_model(k, r.x, r2)
   err = calc_r2_error(r.x, r2)
 
@@ -366,8 +354,14 @@ def display_minimize_r2_result(r2, title=""):
   pt.field_names = ["k", "valor"]
   pt.add_row(["k_obs", r.x[0]])
   pt.add_row(["k_1", r.x[1]])
-  pt.add_row(["k_2", r.x[2]])
+  pt.add_row(["k_3", r.x[2]])
   print(pt)
+
+  write_row_excel(["k_obs", r.x[0]])
+  write_row_excel(["k_1", r.x[1]])
+  write_row_excel(["k_3", r.x[2]])
+  write_row_excel([])
+
 
   pt = PrettyTable()
   pt.field_names = ["t (min)", "r_EtO experimental", "r_EtO modelo", "% error"]
