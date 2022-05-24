@@ -33,7 +33,7 @@ t_exp = np.array([0, 5, 10, 20, 30, 45, 65, 90, 125, 160, 213])
 c_eto_exp = np.array([7.557, 7.045, 6.614, 5.889, 5.267,
                       4.401, 3.582, 2.742, 2.022, 1.549, 0.803])
 
-# r estimation 
+# experimental r
 r_eto_exp = -np.gradient(c_eto_exp, t_exp, edge_order=2)
 
 # constant values from the paper
@@ -250,8 +250,8 @@ def minimize_r2_method(k, kr0, r2, ev=msqr):
   def __f(kr):
     return ev(r_eto_exp, calc_r2_model(k, kr, r2))
 
-  def __not_negative(v):
-    return np.sum([0 > vi for vi in v])
+  # def __not_negative(v):
+  #   return np.sum([0 > vi for vi in v])
  
   # FIXME(samuel): figure out how the contraints actually work
   # constraints = ({"type": "eq", "fun": __not_negative})
